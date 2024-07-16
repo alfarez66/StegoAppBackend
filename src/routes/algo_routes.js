@@ -1,10 +1,10 @@
-const HuffmanCoding = require('../service/Huffman')
+const HuffmanCoding = require('../service/Huffman-f4')
 const RunLengthEncoding = require('../service/RLE')
 const LZW = require('../service/lzw')
 const JBitEncoding = require('../service/jbit')
-const DeflateCompression = require('../service/deflate')
-const ArithmeticCoding = require('../service/arithmetic')
-const LSBSteganography = require('../service/LSB3')
+const DeflateCompression = require('../service/deflate-rev')
+const ArithmeticCoding = require('../service/arithmetic1')
+const LSBSteganography = require('../service/LSB(1)')
 const fs = require('fs');
 const path = require('path');
 
@@ -75,7 +75,7 @@ module.exports = function(app,db){
             //encoding
             const ac = new ArithmeticCoding();
             const radix = 10
-            const { diff, powr, freq} = ac.arithmethicCoding(text,radix)
+            const { diff, powr, freq} = await ac.arithmethicCoding(text,radix)
             console.log(diff.toString(2))
 
             const natFreq = {}
@@ -180,6 +180,7 @@ module.exports = function(app,db){
             const lzw = new LZW()
             const lsbsteg = new LSBSteganography();
             const compressed = LZW.compress(text);
+            // console.log(compressed.length)
             await lsbsteg.embedMessageInImage(inputImagePath, compressed, outputImagePath)
             const outputImageBuffer = fs.readFileSync(outputImagePath);
             const base64OutputImage = outputImageBuffer.toString('base64');
@@ -270,7 +271,7 @@ module.exports = function(app,db){
                 }
             });
             const secretMessage = await lsbsteg.extractMessageFromImage(inputImagePath)
-            console.log(secretMessage)
+            // console.log(secretMessage.length)
             //decoding
             const str = req.body.freq;
             const radix = 10
@@ -280,10 +281,10 @@ module.exports = function(app,db){
                 return {...acc, [key]: BigInt(value)};
             }, {});
             const ac = new ArithmeticCoding();
+            console.log(    )
             const dediff = BigInt(`0b${secretMessage}`)
-            console.log((dediff))
-            const decode = ac.arithmethicDecoding(dediff,radix,powr,codes)
-            // console.log(decode)
+            const decode = await ac.arithmethicDecoding(dediff,radix,powr,codes)
+            // console.log((codes))
             const object ={success:true, text:decode}
             res.send(object)
         } catch(error) {
@@ -365,6 +366,7 @@ module.exports = function(app,db){
             const secretMessage = await lsbsteg.extractMessageFromImage(inputImagePath)
             //decoding
             const decompressed = LZW.decompress(secretMessage);
+            console.log(decompressed.length)
             const object ={success:true, text:decompressed}
             res.send(object)
         } catch(error) {

@@ -4,16 +4,10 @@ const path = require('path');
 class LSBSteganography {
   constructor() {}
 
-  async embedMessageInImage(filePath, message, outputFilePath) {
-    const messageBinary = message
-      .split('')
-      .map(char => char.charCodeAt(0).toString(2).padStart(8, '0'))
-      .join('');
-    const messageLengthBinary = messageBinary.length.toString(2).padStart(16, '0');
-    const binaryMessageWithLength = messageLengthBinary + messageBinary;
-    console.log(typeof(binaryMessageWithLength))
+  async embedMessageInImage(filePath, binaryMessage, outputFilePath) {
+    const messageLengthBinary = binaryMessage.length.toString(2).padStart(32, '0');
+    const binaryMessageWithLength = messageLengthBinary + binaryMessage;
     let messageIndex = 0;
-
     try {
       const image = await Jimp.read(filePath);
       image.scan(0, 0, image.bitmap.width, image.bitmap.height, function(x, y, idx) {
@@ -22,10 +16,8 @@ class LSBSteganography {
           image.bitmap.data[idx] = (image.bitmap.data[idx] & 0xFE) | parseInt(bit, 2);
           messageIndex++;
         }
-        
         if (messageIndex >= binaryMessageWithLength.length) return false;
       });
-      console.log(message.length)
       await image.writeAsync(outputFilePath);
       console.log("Message embedded successfully.");
     } catch (error) {
@@ -41,16 +33,11 @@ class LSBSteganography {
         const bit = image.bitmap.data[idx] & 1;
         binaryMessage += bit.toString();
       });
-
-      const messageLengthBinary = binaryMessage.substring(0, 16);
+      const messageLengthBinary = binaryMessage.substring(0, 32);
       const messageLength = parseInt(messageLengthBinary, 2);
-      const extractedBinaryMessage = binaryMessage.substring(16, 16 + messageLength);
-      const extractedMessage = extractedBinaryMessage
-        .match(/.{1,8}/g)
-        .map(byte => String.fromCharCode(parseInt(byte, 2)))
-        .join('');
+      const extractedBinaryMessage = binaryMessage.substring(32, 32 + messageLength);
       console.log("Message extracted successfully.");
-      return extractedMessage;
+      return extractedBinaryMessage;
     } catch (error) {
       console.error("Error extracting message:", error);
       return '';

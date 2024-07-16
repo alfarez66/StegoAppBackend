@@ -6,10 +6,11 @@ class LSBSteganography {
 
     async embedMessageInImage(filePath, message, outputFilePath) {
         const messageBinary = message
-            .split('')
-            .map(char => char.charCodeAt(0).toString(2).padStart(8, '0'))
-            .join('');
+        .split('')
+        .map(char => char.charCodeAt(0).toString(2).padStart(8, '0'))
+        .join('');
         const messageLengthBinary = messageBinary.length.toString(2).padStart(16, '0');
+        console.log(messageLengthBinary.length)
         const binaryMessageWithLength = messageLengthBinary + messageBinary;
 
         let messageIndex = 0;
@@ -39,15 +40,15 @@ class LSBSteganography {
         try {
             const image = await Jimp.read(filePath);
             let binaryMessage = '';
-
             image.scan(0, 0, image.bitmap.width, image.bitmap.height, function(x, y, idx) {
-            for (let offset = 0; offset < 3; offset++) {
-                const bit = image.bitmap.data[idx + offset] & 1;
-                binaryMessage += bit.toString();
-            }
+                for (let offset = 0; offset < 3; offset++) {
+                    const bit = image.bitmap.data[idx + offset] & 1;
+                    binaryMessage += bit.toString();
+                }
             });
-
+            
             const messageLengthBinary = binaryMessage.substring(0, 16);
+            console.log(messageLengthBinary)
             const messageLength = parseInt(messageLengthBinary, 2);
             const extractedBinaryMessage = binaryMessage.substring(16, 16 + messageLength);
 
